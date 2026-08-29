@@ -1,0 +1,13 @@
+services:
+  postgres:
+    image: 'postgres:latest'
+    container_name: tudu_postgres
+    environment:
+      - 'POSTGRES_DB=tudu_db'
+      - 'POSTGRES_PASSWORD=password'
+      - 'POSTGRES_USER=admin'
+    ports:
+      - '5432'
+
+volumes:
+  data:
