@@ -3,6 +3,7 @@ package com.kim.tudu_api.auth;
 import com.kim.tudu_api.auth.controller.AuthController;
 import com.kim.tudu_api.auth.domain.AuthenticatedUser;
 import com.kim.tudu_api.user.model.UserEntity;
+import com.kim.tudu_api.user.service.UserService;
 import com.kim.tudu_api.util.JwtService;
 import com.kim.tudu_api.util.TestUsers;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,9 @@ public class AuthControllerTest {
 
     @MockitoBean
     AuthenticationManager manager;
+
+    @MockitoBean
+    UserService userService;
 
     @MockitoBean
     JwtService jwtService;

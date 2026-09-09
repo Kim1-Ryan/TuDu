@@ -27,12 +27,18 @@ public class DatabaseUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("Could not find user: " + username);
         }
 
+        List<String> authorityList = user.isAdmin()
+                ? List.of(Authorities.ADMIN, Authorities.USER)
+                : List.of(Authorities.USER);
+
+        List<SimpleGrantedAuthority> authorities = authorityList.stream()
+                .map(SimpleGrantedAuthority::new)
+                .toList();
+
         return new AuthenticatedUser(
                 user.getId(),
                 user.getPassword(),
                 user.getPassword(),
-                List.of(user.isAdmin()
-                        ? new SimpleGrantedAuthority(Authorities.ADMIN)
-                        : new SimpleGrantedAuthority(Authorities.USER)));
+                authorities);
     }
 }

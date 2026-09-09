@@ -19,7 +19,7 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/{id}")
-    @Secured({Authorities.USER, Authorities.ADMIN})
+    @Secured(Authorities.USER)
     public UserDto getUserById(@PathVariable Long id) {
         log.info("Request to get user with id: {}", id);
 
@@ -27,7 +27,7 @@ public class UserController {
     }
 
     @GetMapping
-    @Secured({Authorities.USER, Authorities.ADMIN})
+    @Secured(Authorities.USER)
     public List<UserDto> getUsers() {
         log.info("Request to get all users");
 
@@ -35,7 +35,7 @@ public class UserController {
     }
 
     @PutMapping
-    @Secured({Authorities.USER, Authorities.ADMIN})
+    @Secured(Authorities.USER)
     public UserDto updateUser(@RequestBody UserDto userDto) {
         log.info("Request to update user: {}", userDto);
 

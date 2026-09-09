@@ -1,0 +1,96 @@
+package com.kim.tudu_api.todo.controller;
+
+import com.kim.tudu_api.todo.controller.dto.AddBoardUserRequest;
+import com.kim.tudu_api.todo.controller.dto.BoardDto;
+import com.kim.tudu_api.todo.controller.dto.CreateBoardRequest;
+import com.kim.tudu_api.todo.service.TodoService;
+import com.kim.tudu_api.util.Authorities;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequiredArgsConstructor
+@Slf4j
+@RequestMapping("/api/v1/todo")
+public class TodoController {
+
+    private final TodoService todoService;
+
+    @PostMapping("/board")
+    public BoardDto createBoard(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody CreateBoardRequest request) {
+        log.info("Request to create new board [{}] by user [{}]", request, jwt.getSubject());
+
+        Long authenticatedUserId = jwt.getClaim("id");
+        return todoService.createBoard(authenticatedUserId, request);
+    }
+
+    @PostMapping("/user-access")
+    public void addUserToBoard(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AddBoardUserRequest request) {
+        log.info("Request to add user [{}] to board [{}] by user [{}]",
+                request.userId(),
+                request.boardId(),
+                jwt.getSubject());
+
+        Long authenticatedUserId = jwt.getClaim("id");
+        todoService.addUserToBoard(authenticatedUserId, request);
+    }
+
+    // TODO: add user to board
+    // TODO: create todo list
+    // TODO: create todo item
+
+    // TODO: get board by id
+    // TODO: get boards by user id
+    // TODO: get todo list by id
+    // TODO: get todo lists by board id
+    // TODO: get todo item by id
+    // TODO: get todo items by list id
+
+    // TODO: update board
+    // TODO: update user permission/link to board
+    // TODO: update todo list
+    // TODO: update todo item
+    // TODO: mark item complete/not complete
+
+
+    @DeleteMapping("/board/{boardId}")
+    @Secured(Authorities.USER)
+    public void deleteBoard(@AuthenticationPrincipal Jwt jwt, @PathVariable Long boardId) {
+        log.info("Request to delete board [{}] by user [{}]", boardId, jwt.getSubject());
+
+        Long authenticationUserId = jwt.getClaim("id");
+        todoService.deleteBoard(authenticationUserId, boardId);
+    }
+
+    @DeleteMapping("/user-access/{boardId}/{userId}")
+    @Secured(Authorities.USER)
+    public void removeUserAccessFromBoard(@AuthenticationPrincipal Jwt jwt, @PathVariable Long boardId, @PathVariable Long userId) {
+        log.info("Request to remove user [{}] access to board [{}] by [{}]", userId, boardId, jwt.getSubject());
+
+        Long authenticatedUserId = jwt.getClaim("id");
+        todoService.removeUserAccessFromBoard(authenticatedUserId, boardId, userId);
+    }
+
+    @DeleteMapping("/list/{listId}")
+    @Secured(Authorities.USER)
+    public void deleteTodoList(@AuthenticationPrincipal Jwt jwt, @PathVariable Long listId) {
+        log.info("Request to delete list [{}] by user [{}]", listId, jwt.getSubject());
+
+        Long authenticatedUserId = jwt.getClaim("id");
+        todoService.deleteList(authenticatedUserId, listId);
+    }
+
+    @DeleteMapping("/item/{itemId}")
+    @Secured(Authorities.USER)
+    public void deleteTodoItem(@AuthenticationPrincipal Jwt jwt, @PathVariable Long itemId) {
+        log.info("Request to delete item [{}] by user [{}]", itemId, jwt.getSubject());
+
+        Long authenticatedUserId = jwt.getClaim("id");
+        todoService.deleteListItem(authenticatedUserId, itemId);
+    }
+}

@@ -1,11 +1,11 @@
 package com.kim.tudu_api.user.service;
 
 import com.kim.tudu_api.user.controller.dto.UserDto;
-import com.kim.tudu_api.user.exception.UserAlreadyExistsException;
-import com.kim.tudu_api.user.exception.UserNotFoundException;
 import com.kim.tudu_api.user.mapper.UserMapper;
 import com.kim.tudu_api.user.model.UserEntity;
 import com.kim.tudu_api.user.repository.UserRepository;
+import com.kim.tudu_api.util.error.AlreadyExistsException;
+import com.kim.tudu_api.util.error.NotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ public class UserService {
 
     public UserDto getUserById(Long id) {
         UserEntity userEntity = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("Cannot find user with id: " + id));
+                .orElseThrow(() -> new NotFoundException("Cannot find user with id: " + id));
 
         return mapper.toUserDto(userEntity);
     }
@@ -42,7 +42,7 @@ public class UserService {
                 userDto.username());
 
         if (!entities.isEmpty()) {
-            throw new UserAlreadyExistsException("Username and/or email already in use");
+            throw new AlreadyExistsException("Username and/or email already in use");
         }
 
         UserEntity savedUser = userRepository.save(mapper.toUserEntity(userDto));
@@ -53,7 +53,7 @@ public class UserService {
 
     public UserDto updateUser(UserDto userDto) {
         UserEntity userEntity = userRepository.findById(userDto.id())
-                .orElseThrow(() -> new UserNotFoundException("Cannot find user with id: " + userDto.id()));
+                .orElseThrow(() -> new NotFoundException("Cannot find user with id: " + userDto.id()));
         log.debug("userEntity to update: {}", userEntity);
 
         mapper.updateEntity(userDto, userEntity);
@@ -64,7 +64,7 @@ public class UserService {
 
     public void deleteUser(Long id) {
         UserEntity userEntity = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("Could not find user with id: " + id));
+                .orElseThrow(() -> new NotFoundException("Could not find user with id: " + id));
 
         log.debug("userEntity to delete: {}", userEntity);
 
