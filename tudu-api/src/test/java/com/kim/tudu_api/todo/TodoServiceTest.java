@@ -236,6 +236,36 @@ public class TodoServiceTest {
 
     @ParameterizedTest
     @MethodSource("boardPermissionProvider")
+    void shouldCreateListItemIfHavePermissionLevel(BoardPermission userPermission) {
+        TodoListEntity listEntity = listRepository.findAll().getFirst();
+        UserEntity callerEntity = userRepository.save(TestUsers.USER2.toBuilder()
+                .boardLinks(new ArrayList<>())
+                .build());
+        UserBoardLinkEntity callerLinkEntity = linkRepository.save(UserBoardLinkEntity.builder()
+                .user(callerEntity)
+                .board(listEntity.getBoard())
+                .permissionLevel(userPermission)
+                .grantedAt(LocalDateTime.now())
+                .build());
+        callerEntity.getBoardLinks().add(callerLinkEntity);
+        listEntity.getBoard().getUserLinks().add(callerLinkEntity);
+
+        if (BoardPermission.ITEM_WRITE.getStrength() <= userPermission.getStrength()) {
+            todoService.createListItem(callerEntity.getId(),
+                    new CreateListItemRequest(listEntity.getId(), "Test Item"));
+
+            TodoListEntity updatedListEntity = listRepository.findAll().getFirst();
+            assertThat(updatedListEntity.getTodoItems().size()).isEqualTo(4);
+            return;
+        }
+
+        assertThatCode(() -> todoService.createListItem(callerEntity.getId(),
+                new CreateListItemRequest(listEntity.getId(), "Test Item"))
+        ).isInstanceOf(InsufficientPermissionException.class);
+    }
+
+    @ParameterizedTest
+    @MethodSource("boardPermissionProvider")
     void shouldDeleteBoardIfHavePermissionLevel(BoardPermission userPermission) {
         UserEntity creatorEntity = userRepository
                 .findByEmailEqualsIgnoreCaseOrUsernameEqualsIgnoreCase("", TestUsers.USER1.getUsername()).stream()

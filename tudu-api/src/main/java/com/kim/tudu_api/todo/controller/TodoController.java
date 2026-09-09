@@ -52,7 +52,17 @@ public class TodoController {
         return todoService.createList(authenticatedUserId, request);
     }
 
-    // TODO: create todo item
+    @PostMapping("/item")
+    @Secured(Authorities.USER)
+    public TodoItemDto createListItem(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody CreateListItemRequest request) {
+        log.info("Request to add item [{}] to list [{}] by user [{}]",
+                request.description(),
+                request.listId(),
+                jwt.getSubject());
+
+        Long authenticatedUserId = jwt.getClaim("id");
+        return todoService.createListItem(authenticatedUserId, request);
+    }
 
     // TODO: get board by id
     // TODO: get boards by user id

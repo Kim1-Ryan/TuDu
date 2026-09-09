@@ -104,6 +104,25 @@ public class TodoService {
         return todoMapper.toDto(listEntity);
     }
 
+    public TodoItemDto createListItem(Long userId, CreateListItemRequest request) {
+        TodoListEntity listEntity = listRepository.findById(request.listId())
+                .orElseThrow(() -> new NotFoundException("Could not find list: " + request.listId()));
+        checkUserHasSufficientPermission(userId, listEntity.getBoard().getId(), BoardPermission.ITEM_WRITE);
+        String description = request.description().trim();
+        if (listEntity.getTodoItems().stream()
+                .anyMatch(item -> description.equalsIgnoreCase(item.getDescription()))) {
+            throw new AlreadyExistsException("Board already has a list with name: " + description);
+        }
+
+        TodoItemEntity itemEntity = itemRepository.save(TodoItemEntity.builder()
+                .description(description)
+                .completed(false)
+                .list(listEntity)
+                .build());
+        listEntity.getTodoItems().add(itemEntity);
+        return todoMapper.toDto(itemEntity);
+    }
+
     public void deleteBoard(Long userId, Long boardId) {
         checkUserHasSufficientPermission(userId, boardId, BoardPermission.BOARD_CREATOR);
         boardRepository.deleteById(boardId);
