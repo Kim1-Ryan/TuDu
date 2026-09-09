@@ -111,7 +111,14 @@ public class TodoController {
         return todoService.getListItemById(authenticatedUserId, itemId);
     }
 
-    // TODO: get todo items by list id
+    @GetMapping("/item/by-list/{listId}")
+    @Secured(Authorities.USER)
+    public List<TodoItemDto> getItemsByListId(@AuthenticationPrincipal Jwt jwt, @PathVariable Long listId) {
+        log.info("Request to get items by list [{}] by user [{}]", listId, jwt.getSubject());
+
+        Long authenticatedUserId = jwt.getClaim("id");
+        return todoService.getListItemsByListId(authenticatedUserId, listId);
+    }
 
     // TODO: update board
     // TODO: update user permission/link to board

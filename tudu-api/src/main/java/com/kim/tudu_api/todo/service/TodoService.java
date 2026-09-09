@@ -168,6 +168,15 @@ public class TodoService {
         return todoMapper.toDto(itemEntity);
     }
 
+    public List<TodoItemDto> getListItemsByListId(Long userId, Long listId) {
+        TodoListEntity listEntity = listRepository.findById(listId)
+                .orElseThrow(() -> new NotFoundException("Could not find list: " + listId));
+        checkUserHasSufficientPermission(userId, listEntity.getBoard().getId(), BoardPermission.ITEM_MARK);
+        return listEntity.getTodoItems().stream()
+                .map(todoMapper::toDto)
+                .toList();
+    }
+
     public void deleteBoard(Long userId, Long boardId) {
         checkUserHasSufficientPermission(userId, boardId, BoardPermission.BOARD_CREATOR);
         boardRepository.deleteById(boardId);
