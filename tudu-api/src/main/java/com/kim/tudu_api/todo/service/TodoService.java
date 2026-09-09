@@ -161,6 +161,13 @@ public class TodoService {
                 .toList();
     }
 
+    public TodoItemDto getListItemById(Long userId, Long itemId) {
+        TodoItemEntity itemEntity = itemRepository.findById(itemId)
+                .orElseThrow(() -> new NotFoundException("Could not find item: " + itemId));
+        checkUserHasSufficientPermission(userId, itemEntity.getList().getBoard().getId(), BoardPermission.ITEM_MARK);
+        return todoMapper.toDto(itemEntity);
+    }
+
     public void deleteBoard(Long userId, Long boardId) {
         checkUserHasSufficientPermission(userId, boardId, BoardPermission.BOARD_CREATOR);
         boardRepository.deleteById(boardId);
