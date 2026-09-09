@@ -123,6 +123,13 @@ public class TodoService {
         return todoMapper.toDto(itemEntity);
     }
 
+    public BoardDto getBoardById(Long userId, Long boardId) {
+        checkUserHasSufficientPermission(userId, boardId, BoardPermission.ITEM_MARK);
+        BoardEntity boardEntity = boardRepository.findById(boardId)
+                .orElseThrow(() -> new NotFoundException("Could not find board: " + boardId));
+        return todoMapper.toDto(boardEntity);
+    }
+
     public void deleteBoard(Long userId, Long boardId) {
         checkUserHasSufficientPermission(userId, boardId, BoardPermission.BOARD_CREATOR);
         boardRepository.deleteById(boardId);
@@ -155,10 +162,14 @@ public class TodoService {
     }
 
     private void checkUserHasSufficientPermission(Long userId, Long boardId, BoardPermission requiredLevel) {
+        UserEntity userEntity = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Cound not find user: " + userId));
+        if (userEntity.isAdmin()) {
+            return;
+        }
         UserBoardLinkEntity entity = linkRepository.findByUser_IdAndBoard_Id(userId, boardId)
                 .orElseThrow(() -> new NotFoundException("Could not find link for user " + userId + " and board " + boardId));
-        boolean isAdmin = entity.getUser().isAdmin();
-        if (!isAdmin && !BoardPermission.satisfiesPermissionLevel(entity.getPermissionLevel(), requiredLevel)) {
+        if (!BoardPermission.satisfiesPermissionLevel(entity.getPermissionLevel(), requiredLevel)) {
             throw new InsufficientPermissionException(String.format(
                     "User id [%d] fails to satisfy permission requirement of [%s], current level: [%s]",
                     userId,
