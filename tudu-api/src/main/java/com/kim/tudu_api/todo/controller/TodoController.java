@@ -11,6 +11,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -73,7 +75,14 @@ public class TodoController {
         return todoService.getBoardById(authenticatedUserId, boardId);
     }
 
-    // TODO: get boards by user id
+    @GetMapping("/board/by-user/{userId}")
+    public List<BoardDto> getBoardsByUserId(@AuthenticationPrincipal Jwt jwt, @PathVariable Long userId) {
+        log.info("Request to get boards by id [{}] by user [{}]", userId, jwt.getSubject());
+
+        Long authenticatedUserId = jwt.getClaim("id");
+        return todoService.getBoardsByUserId(authenticatedUserId, userId);
+    }
+
     // TODO: get todo list by id
     // TODO: get todo lists by board id
     // TODO: get todo item by id

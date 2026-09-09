@@ -288,6 +288,31 @@ public class TodoServiceTest {
                 .isInstanceOf(NotFoundException.class);
     }
 
+    @Test
+    void shouldGetBoardsIfSelf() {
+        UserEntity userEntity = userRepository.findAll().getFirst();
+        List<BoardDto> boardList = todoService.getBoardsByUserId(userEntity.getId(), userEntity.getId());
+        assertThat(boardList).isNotNull();
+        assertThat(boardList.size()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldGetBoardsIfAdmin() {
+        UserEntity userEntity = userRepository.findAll().getFirst();
+        UserEntity callerEntity = userRepository.save(TestUsers.USER2.toBuilder().admin(true).build());
+        List<BoardDto> boardList = todoService.getBoardsByUserId(callerEntity.getId(), userEntity.getId());
+        assertThat(boardList).isNotNull();
+        assertThat(boardList.size()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldNotGetBoardsIfNotSelf() {
+        UserEntity userEntity = userRepository.findAll().getFirst();
+        UserEntity callerEntity = userRepository.save(TestUsers.USER2.toBuilder().build());
+        assertThatCode(() -> todoService.getBoardsByUserId(callerEntity.getId(), userEntity.getId()))
+                .isInstanceOf(InsufficientPermissionException.class);
+    }
+
     @ParameterizedTest
     @MethodSource("boardPermissionProvider")
     void shouldDeleteBoardIfHavePermissionLevel(BoardPermission userPermission) {
