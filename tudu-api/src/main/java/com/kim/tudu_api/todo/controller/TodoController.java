@@ -93,7 +93,15 @@ public class TodoController {
         return todoService.getListById(authenticatedUserId, listId);
     }
 
-    // TODO: get todo lists by board id
+    @GetMapping("/list/by-board/{boardId}")
+    @Secured(Authorities.USER)
+    public List<TodoListDto> getListsByBoardId(@AuthenticationPrincipal Jwt jwt, @PathVariable Long boardId) {
+        log.info("Request to get list by board [{}] by user [{}]", boardId, jwt.getSubject());
+
+        Long authenticatedUserId = jwt.getClaim("id");
+        return todoService.getListsByBoardId(authenticatedUserId, boardId);
+    }
+
     // TODO: get todo item by id
     // TODO: get todo items by list id
 

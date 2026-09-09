@@ -152,6 +152,15 @@ public class TodoService {
         return todoMapper.toDto(listEntity);
     }
 
+    public List<TodoListDto> getListsByBoardId(Long userId, Long boardId) {
+        checkUserHasSufficientPermission(userId, boardId, BoardPermission.ITEM_MARK);
+        BoardEntity boardEntity = boardRepository.findById(boardId)
+                .orElseThrow(() -> new NotFoundException("Could not find board: " + boardId));
+        return boardEntity.getTodoLists().stream()
+                .map(todoMapper::toDto)
+                .toList();
+    }
+
     public void deleteBoard(Long userId, Long boardId) {
         checkUserHasSufficientPermission(userId, boardId, BoardPermission.BOARD_CREATOR);
         boardRepository.deleteById(boardId);
