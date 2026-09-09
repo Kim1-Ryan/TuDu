@@ -1,8 +1,6 @@
 package com.kim.tudu_api.todo.service;
 
-import com.kim.tudu_api.todo.controller.dto.AddBoardUserRequest;
-import com.kim.tudu_api.todo.controller.dto.BoardDto;
-import com.kim.tudu_api.todo.controller.dto.CreateBoardRequest;
+import com.kim.tudu_api.todo.controller.dto.*;
 import com.kim.tudu_api.todo.mapper.TodoMapper;
 import com.kim.tudu_api.todo.model.*;
 import com.kim.tudu_api.todo.repository.BoardRepository;
@@ -85,6 +83,25 @@ public class TodoService {
                 .permissionLevel(request.boardPermission())
                 .grantedAt(LocalDateTime.now())
                 .build());
+    }
+
+    public TodoListDto createList(Long userId, CreateListRequest request) {
+        checkUserHasSufficientPermission(userId, request.boardId(), BoardPermission.LIST_WRITE);
+        String listName = request.name().trim();
+        BoardEntity boardEntity = boardRepository.findById(request.boardId())
+                .orElseThrow(() -> new NotFoundException("Could not find board: " + request.boardId()));
+        if (boardEntity.getTodoLists().stream()
+                .anyMatch(list -> listName.equalsIgnoreCase(list.getName()))) {
+            throw new AlreadyExistsException("Board already has a list with name: " + listName);
+        }
+
+        TodoListEntity listEntity = listRepository.save(TodoListEntity.builder()
+                .name(listName)
+                .todoItems(new ArrayList<>())
+                .board(boardEntity)
+                .build());
+        boardEntity.getTodoLists().add(listEntity);
+        return todoMapper.toDto(listEntity);
     }
 
     public void deleteBoard(Long userId, Long boardId) {

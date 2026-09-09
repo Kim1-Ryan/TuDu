@@ -1,8 +1,6 @@
 package com.kim.tudu_api.todo.controller;
 
-import com.kim.tudu_api.todo.controller.dto.AddBoardUserRequest;
-import com.kim.tudu_api.todo.controller.dto.BoardDto;
-import com.kim.tudu_api.todo.controller.dto.CreateBoardRequest;
+import com.kim.tudu_api.todo.controller.dto.*;
 import com.kim.tudu_api.todo.service.TodoService;
 import com.kim.tudu_api.util.Authorities;
 import jakarta.validation.Valid;
@@ -22,6 +20,7 @@ public class TodoController {
     private final TodoService todoService;
 
     @PostMapping("/board")
+    @Secured(Authorities.USER)
     public BoardDto createBoard(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody CreateBoardRequest request) {
         log.info("Request to create new board [{}] by user [{}]", request, jwt.getSubject());
 
@@ -30,6 +29,7 @@ public class TodoController {
     }
 
     @PostMapping("/user-access")
+    @Secured(Authorities.USER)
     public void addUserToBoard(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AddBoardUserRequest request) {
         log.info("Request to add user [{}] to board [{}] by user [{}]",
                 request.userId(),
@@ -40,8 +40,18 @@ public class TodoController {
         todoService.addUserToBoard(authenticatedUserId, request);
     }
 
-    // TODO: add user to board
-    // TODO: create todo list
+    @PostMapping("/list")
+    @Secured(Authorities.USER)
+    public TodoListDto createList(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody CreateListRequest request) {
+        log.info("Request to add list [{}] to board [{}] by user [{}]",
+                request.name(),
+                request.boardId(),
+                jwt.getSubject());
+
+        Long authenticatedUserId = jwt.getClaim("id");
+        return todoService.createList(authenticatedUserId, request);
+    }
+
     // TODO: create todo item
 
     // TODO: get board by id
