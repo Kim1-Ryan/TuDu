@@ -164,6 +164,47 @@ public class TodoServiceTest {
     }
 
     @ParameterizedTest
+    @MethodSource("permissionCombinationProvider")
+    void shouldAddUserToBoardIfHavePermissionLevel(BoardPermission userPermission, BoardPermission targetPermission) {
+        BoardEntity boardEntity = boardRepository.findAll().getFirst();
+        UserEntity callerEntity = userRepository.save(TestUsers.USER2.toBuilder()
+                .boardLinks(new ArrayList<>())
+                .build());
+        UserBoardLinkEntity callerLinkEntity = linkRepository.save(UserBoardLinkEntity.builder()
+                .user(callerEntity)
+                .board(boardEntity)
+                .permissionLevel(userPermission)
+                .grantedAt(LocalDateTime.now())
+                .build());
+        callerEntity.getBoardLinks().add(callerLinkEntity);
+        boardEntity.getUserLinks().add(callerLinkEntity);
+
+        UserEntity targetEntity = userRepository.save(TestUsers.USER3.toBuilder()
+                .boardLinks(new ArrayList<>())
+                .build());
+
+        if (BoardPermission.BOARD_WRITE.getStrength() <= userPermission.getStrength()
+                && userPermission.getStrength() > targetPermission.getStrength()) {
+
+            entityManager.flush();
+            entityManager.clear();
+
+            todoService.addUserToBoard(callerEntity.getId(),
+                    new AddBoardUserRequest(boardEntity.getId(), targetEntity.getId(), targetPermission));
+
+
+            BoardEntity updatedBoard = boardRepository.findAll().getFirst();
+            assertThat(updatedBoard.getUserLinks().size()).isEqualTo(3);
+
+            return;
+        }
+
+        assertThatCode(() -> todoService.addUserToBoard(callerEntity.getId(),
+                new AddBoardUserRequest(boardEntity.getId(), targetEntity.getId(), targetPermission))
+        ).isInstanceOf(InsufficientPermissionException.class);
+    }
+
+    @ParameterizedTest
     @MethodSource("boardPermissionProvider")
     void shouldDeleteBoardIfHavePermissionLevel(BoardPermission userPermission) {
         UserEntity creatorEntity = userRepository
@@ -255,16 +296,14 @@ public class TodoServiceTest {
             assertThat(boardEntity.getUserLinks().size()).isEqualTo(2);
             assertThat(targetEntity.getBoardLinks().size()).isEqualTo(0);
 
-            assertThatCode(() -> {
-                linkRepository.findById(targetLinkEntity.getId())
-                        .orElseThrow(() -> new NotFoundException("Cannot find link"));
-            }).isInstanceOf(NotFoundException.class);
+            assertThatCode(() -> linkRepository.findById(targetLinkEntity.getId())
+                        .orElseThrow(() -> new NotFoundException("Cannot find link"))
+            ).isInstanceOf(NotFoundException.class);
             return;
         }
 
-        assertThatCode(() -> {
-            todoService.removeUserAccessFromBoard(callerEntity.getId(), boardEntity.getId(), targetEntity.getId());
-        }).isInstanceOf(InsufficientPermissionException.class);
+        assertThatCode(() -> todoService.removeUserAccessFromBoard(callerEntity.getId(), boardEntity.getId(), targetEntity.getId()))
+                .isInstanceOf(InsufficientPermissionException.class);
     }
 
     @ParameterizedTest
