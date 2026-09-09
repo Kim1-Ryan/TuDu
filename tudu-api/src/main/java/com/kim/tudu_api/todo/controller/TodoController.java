@@ -76,6 +76,7 @@ public class TodoController {
     }
 
     @GetMapping("/board/by-user/{userId}")
+    @Secured(Authorities.USER)
     public List<BoardDto> getBoardsByUserId(@AuthenticationPrincipal Jwt jwt, @PathVariable Long userId) {
         log.info("Request to get boards by id [{}] by user [{}]", userId, jwt.getSubject());
 
@@ -83,7 +84,15 @@ public class TodoController {
         return todoService.getBoardsByUserId(authenticatedUserId, userId);
     }
 
-    // TODO: get todo list by id
+    @GetMapping("/list/{listId}")
+    @Secured(Authorities.USER)
+    public TodoListDto getListById(@AuthenticationPrincipal Jwt jwt, @PathVariable Long listId) {
+        log.info("Request to get list by id [{}] by user [{}]", listId, jwt.getSubject());
+
+        Long authenticatedUserId = jwt.getClaim("id");
+        return todoService.getListById(authenticatedUserId, listId);
+    }
+
     // TODO: get todo lists by board id
     // TODO: get todo item by id
     // TODO: get todo items by list id

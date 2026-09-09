@@ -131,6 +131,27 @@ public class TodoService {
         return todoMapper.toDto(boardEntity);
     }
 
+    public List<BoardDto> getBoardsByUserId(Long callerUserId, Long userId) {
+        UserEntity callerEntity = userRepository.findById(callerUserId)
+                .orElseThrow(() -> new NotFoundException("Could not find user: " + callerUserId));
+        if (!callerEntity.isAdmin() && !callerUserId.equals(userId)) {
+            throw new InsufficientPermissionException("Insufficient permission to view user");
+        }
+
+        UserEntity userEntity = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Could not find user: " + userId));
+        return userEntity.getBoardLinks().stream()
+                .map(link -> todoMapper.toDto(link.getBoard()))
+                .toList();
+    }
+
+    public TodoListDto getListById(Long userId, Long listId) {
+        TodoListEntity listEntity = listRepository.findById(listId)
+                .orElseThrow(() -> new NotFoundException("Could not find list: " + listId));
+        checkUserHasSufficientPermission(userId, listEntity.getBoard().getId(), BoardPermission.ITEM_MARK);
+        return todoMapper.toDto(listEntity);
+    }
+
     public void deleteBoard(Long userId, Long boardId) {
         checkUserHasSufficientPermission(userId, boardId, BoardPermission.BOARD_CREATOR);
         boardRepository.deleteById(boardId);
@@ -177,20 +198,6 @@ public class TodoService {
                     requiredLevel,
                     entity.getPermissionLevel()));
         }
-    }
-
-    public List<BoardDto> getBoardsByUserId(Long callerUserId, Long userId) {
-        UserEntity callerEntity = userRepository.findById(callerUserId)
-                .orElseThrow(() -> new NotFoundException("Could not find user: " + callerUserId));
-        if (!callerEntity.isAdmin() && !callerUserId.equals(userId)) {
-            throw new InsufficientPermissionException("Insufficient permission to view user");
-        }
-
-        UserEntity userEntity = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Could not find user: " + userId));
-        return userEntity.getBoardLinks().stream()
-                .map(link -> todoMapper.toDto(link.getBoard()))
-                .toList();
     }
 
     private void checkUserHasSufficientPermissionToGrantPermission(Long userId, Long boardId, BoardPermission requestedPermission) {
