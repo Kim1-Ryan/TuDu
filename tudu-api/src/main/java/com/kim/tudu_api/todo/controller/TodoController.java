@@ -120,7 +120,15 @@ public class TodoController {
         return todoService.getListItemsByListId(authenticatedUserId, listId);
     }
 
-    // TODO: update board
+    @PutMapping("/board")
+    @Secured(Authorities.USER)
+    public BoardDto updateBoard(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody UpdateBoardRequest request) {
+        log.info("Request to update board [{}] by user [{}]", request, jwt.getSubject());
+
+        Long authenticatedUserId = jwt.getClaim("id");
+        return todoService.updateBoard(authenticatedUserId, request);
+    }
+
     // TODO: update user permission/link to board
     // TODO: update todo list
     // TODO: update todo item

@@ -177,6 +177,14 @@ public class TodoService {
                 .toList();
     }
 
+    public BoardDto updateBoard(Long userId, UpdateBoardRequest request) {
+        checkUserHasSufficientPermission(userId, request.id(), BoardPermission.BOARD_WRITE);
+        BoardEntity boardEntity = boardRepository.findById(request.id())
+                .orElseThrow(() -> new NotFoundException("Could not find board: " + request.id()));
+        todoMapper.updateBoardEntity(boardEntity, request);
+        return todoMapper.toDto(boardRepository.save(boardEntity));
+    }
+
     public void deleteBoard(Long userId, Long boardId) {
         checkUserHasSufficientPermission(userId, boardId, BoardPermission.BOARD_CREATOR);
         boardRepository.deleteById(boardId);
