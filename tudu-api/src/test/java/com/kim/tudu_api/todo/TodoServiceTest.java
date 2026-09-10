@@ -445,6 +445,52 @@ public class TodoServiceTest {
     }
 
     @ParameterizedTest
+    @MethodSource("permissionCombinationProvider")
+    void shouldUpdateBoardUserIfHavePermissionLevel(BoardPermission callerPermission, BoardPermission targetPermission) {
+        BoardEntity boardEntity = boardRepository.findAll().getFirst();
+        UserEntity callerUserEntity = userRepository.save(TestUsers.USER2.toBuilder()
+                .boardLinks(new ArrayList<>())
+                .build());
+        UserBoardLinkEntity callerLinkEntity = linkRepository.save(UserBoardLinkEntity.builder()
+                .board(boardEntity)
+                .user(callerUserEntity)
+                .permissionLevel(callerPermission)
+                .grantedAt(LocalDateTime.now())
+                .build());
+        boardEntity.getUserLinks().add(callerLinkEntity);
+        callerUserEntity.getBoardLinks().add(callerLinkEntity);
+
+        UserEntity targetUserEntity = userRepository.save(TestUsers.USER3.toBuilder()
+                .boardLinks(new ArrayList<>())
+                .build());
+        UserBoardLinkEntity targetLinkEntity = linkRepository.save(UserBoardLinkEntity.builder()
+                .board(boardEntity)
+                .user(targetUserEntity)
+                .permissionLevel(BoardPermission.ITEM_MARK)
+                .grantedAt(LocalDateTime.now())
+                .build());
+        boardEntity.getUserLinks().add(targetLinkEntity);
+        callerUserEntity.getBoardLinks().add(targetLinkEntity);
+
+        if (callerPermission.getStrength() >= BoardPermission.BOARD_WRITE.getStrength()
+                && callerPermission.getStrength() > targetPermission.getStrength()) {
+
+            todoService.updateUserAccessToBoard(callerUserEntity.getId(),
+                    new UpdateBoardUserRequest(boardEntity.getId(), targetUserEntity.getId(), targetPermission));
+            UserBoardLinkEntity updatedLinkEntity = linkRepository.findByUser_IdAndBoard_Id(
+                    targetUserEntity.getId(),
+                    boardEntity.getId()).orElse(null);
+            assert updatedLinkEntity != null;
+            assertThat(updatedLinkEntity.getPermissionLevel()).isEqualTo(targetPermission);
+            return;
+        }
+
+        assertThatCode(() -> todoService.updateUserAccessToBoard(callerUserEntity.getId(),
+                new UpdateBoardUserRequest(boardEntity.getId(), targetUserEntity.getId(), targetPermission)))
+                .isInstanceOf(InsufficientPermissionException.class);
+    }
+
+    @ParameterizedTest
     @MethodSource("boardPermissionProvider")
     void shouldDeleteBoardIfHavePermissionLevel(BoardPermission userPermission) {
         UserEntity creatorEntity = userRepository

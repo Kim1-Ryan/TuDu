@@ -26,7 +26,14 @@ public interface TodoMapper {
 
     TodoItemDto toDto(TodoItemEntity entity);
 
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "userLinks", ignore = true)
     @Mapping(target = "todoLists", ignore = true)
     void updateBoardEntity(@MappingTarget BoardEntity entity, UpdateBoardRequest request);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "board", ignore = true)
+    @Mapping(target = "grantedAt", ignore = true)
+    void updateBoardUserEntity(@MappingTarget UserBoardLinkEntity entity, UpdateBoardUserRequest request);
 }

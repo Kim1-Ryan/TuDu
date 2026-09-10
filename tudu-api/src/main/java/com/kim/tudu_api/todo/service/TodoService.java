@@ -185,6 +185,15 @@ public class TodoService {
         return todoMapper.toDto(boardRepository.save(boardEntity));
     }
 
+    public void updateUserAccessToBoard(Long userId, UpdateBoardUserRequest request) {
+        checkUserHasSufficientPermissionOverUser(userId, request.boardId(), request.userId());
+        checkUserHasSufficientPermissionToGrantPermission(userId, request.boardId(), request.permissionLevel());
+        UserBoardLinkEntity linkEntity = linkRepository.findByUser_IdAndBoard_Id(request.userId(), request.boardId())
+                .orElseThrow(() -> new NotFoundException("Could not find link for user and board: " + request));
+        todoMapper.updateBoardUserEntity(linkEntity, request);
+        linkRepository.save(linkEntity);
+    }
+
     public void deleteBoard(Long userId, Long boardId) {
         checkUserHasSufficientPermission(userId, boardId, BoardPermission.BOARD_CREATOR);
         boardRepository.deleteById(boardId);
